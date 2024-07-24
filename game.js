@@ -31,6 +31,8 @@ function preload() {
         'assets/entities/mario.png',
         { frameWidth : 18, frameHeight : 16 } 
     )
+
+    
     
 }
 
@@ -44,10 +46,34 @@ function create() {
          'floorbricks' )
          .setOrigin(0, 0)
 
-    this.add.sprite(50, 210, 'mario')
+    this.mario = this.add.sprite(50, 210, 'mario')
         .setOrigin(0,1)
+
+    this.anims.create({
+        key: 'mario-walk',
+        frames: this.anims.generateFrameNumbers(
+            'mario',
+            { start: 3, end: 1 }
+         ),
+        frameRate: 12,
+        repeat: -1
+    })
+
+    this.keys = this.input.keyboard.createCursorKeys()
 }
 
 function update() {
+
+    if(this.keys.left.isDown){
+        this.mario.anims.play('mario-walk', true)
+        this.mario.x -= 2     
+    }else if (this.keys.right.isDown){
+        this.mario.anims.play('mario-walk', true)
+        this.mario.x += 2
+        
+    }else {
+        this.mario.anims.stop()
+        this.mario.setFrame(0)
+    }
     
 }
