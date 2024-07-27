@@ -1,5 +1,7 @@
 /* global Phaser */
 
+import { createAnimations } from './animations.js'
+
 const config = {
     type : Phaser.AUTO,
     width: 256,
@@ -13,7 +15,7 @@ const config = {
             debug: false
         }
     },
-    scene:{
+    scene: {
         preload, // se ejecuta para cargar recrusos
         create, // se ejecuta cuando el juego comienza
         update // se ejecuta en cada frame
@@ -39,6 +41,15 @@ function preload() {
         { frameWidth : 18, frameHeight : 16 } 
     )
 
+    this.load.audio(
+        'gameover',
+        'assets/sound/umsic/gameover.mp3'
+    )
+    
+    this.load.audio(
+        'jump',
+        'assets/sound/effects/jump.mp3'
+    )
     
     
 }
@@ -54,45 +65,37 @@ function create() {
     this.floor = this.physics.add.staticGroup()
 
     this.floor
-        .create(0, config.height -32, 'floorbricks')
-        .setOrigin(0,0)
+        .create(0, config.height - 16, 'floorbricks')
+        .setOrigin(0, 0.5)
+        .refreshBody()
 
     this.floor
-        .create(150, config.height -32, 'floorbricks')
-        .setOrigin(0,0)
+        .create(150, config.height - 16, 'floorbricks')
+        .setOrigin(0, 0.5)
+        .refreshBody()
 
-
-    this.physics.add.collider(this.mario, this.floor)
-    
     this.mario = this.physics.add.sprite(50, 210, 'mario')
-        .sertOrigin(0,1)
-        .setGravity(1)
-        
-    this.anims.create({
-        key: 'mario-walk',
-        frames: this.anims.generateFrameNumbers(
-            'mario',
-            { start: 1, end: 3 }
-         ),
-        frameRate: 12,
-        repeat: -1
-    })
+        .setOrigin(0,1)
+        .setCollideWorldBounds(true)
+        .setGravityY(300)
 
-    this.anims.create({
-        key: 'mario-idle',
-        frames: [{key: 'mario',frame: '0'}]
-    })
+    
+    this.physics.world.setBounds(0, 0, 2000, config.height)    
+    this.physics.add.collider(this.mario, this.floor)    
 
-    this.anims.create({
-        key: 'mario-jump',
-        frames: [{key: 'mario', frame: 5}]
-    })
+
+    this.cameras.main.setBounds(0, 0, 2000, config.height)
+    this.cameras.main.startFollow(this.mario)
+
+    createAnimations(this)
 
     this.keys = this.input.keyboard.createCursorKeys()
 }
 
 function update() {
 
+    if(this.mario.isDead) return
+    
     if(this.keys.left.isDown){
         this.mario.anims.play('mario-walk', true)
         this.mario.x -= 2     
@@ -106,8 +109,24 @@ function update() {
     }
     
 
-    if(this.keys.up.isDown){
-        this.mario.y -= 5
+    if(this.keys.up.isDown && this.mario.body.touching.down){
+        this.mario.setVelocityY(-300)
         this.mario.anims.play('mario-jump', true)
+        this.sound.add('jump', { volume: 0.2 }).play()
     }
+
+    if(this.mario.y >= config.height){
+        this.mario.isDead = true
+        this.mario.anims.play('mario-die', true)
+        this.mario.setCollideWorldBounds(false)
+        
+
+        setTimeout(() => {
+            this.mario.setVelocityY(-350)
+        }, 100)
+        
+        setTimeout(() => {
+            this.scene.restart()
+        }, 2000)
+}
 }
